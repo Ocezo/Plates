@@ -122,6 +122,10 @@ fprintf('L''angle max est de %0.2f°.\n\n', theta_max * 180/pi);
 Ie = edge(Ig,'canny');
 disp_can(dbg, Ie);
 
+% Igmap = rgb2gray(Imap);
+% Iemap = edge(Igmap,'canny');
+% figure; image(repmat(Iemap,[1 1 3])); axis image; axis off;
+
 % descriptors
 
 % 2d Homography based on good descriptors
