@@ -77,9 +77,16 @@ opt = 'col';                   % color option: art / col
 k = 1 + sum(p);                % total number of clusters
 C = kmeans(X,[mpcol;pcols],1); Imap = map(opt,k,X,C,h,w);
 
-% Harris corners
-Ig = rgb2gray(Ic); thc = 20;            % Harris threshold - [10 50]
-[~,r,c] = harris(Ig,1,thc,2); Hc=[r,c]; % Harris corners
+% image corners (from Harris & Stephen or Noble)
+Ig = rgb2gray(Ic); % Grayscale conversion
+thresh = 20;       % Harris threshold \in [10, 50]
+sigma = 1;         % dilution parameter
+radius = 2;        % threshold radius
+% kh = 0.04;       % Harris's "k" (not to confuse with k-means's "k")
+% [~,r,c] = harris(Ig, sigma, kh, 'thresh', thresh, 'radius', radius);
+[~,r,c] = noble(Ig, sigma, 'thresh', thresh, 'radius', radius);
+
+Hc=[r,c]; % Harris corners
 Ih = encrust_harris(Imap,Hc); disp_har(dbg,Ih,Hc);
 
 % Absolute gradient images
