@@ -102,7 +102,37 @@ Axy = atan2(-Iy,-Ix);       % gradient angles on [-pi, pi] with convention:
                             % .--> x  
                             % |
                             % v y
-disp_norm_angle(dbg, Nxy, Axy);
+
+% This code aims to detect fast the horizontal pararel lines of the plates
+% in order to ameliorate the 2D homography
+% *********   *********
+[NXY, ~] = disp_norm_angle(dbg, Nxy, Axy);
+
+set(7,'Position',[1200 330 720 645]);
+
+fprintf('[min(Nxy), max(Nxy)]= [%0.2f, %0.2f]\n',min(Nxy(:)),max(Nxy(:)));
+fprintf('[min(NXY), max(NXY)]= [%0.2f, %0.2f]\n',min(NXY(:)),max(NXY(:)));
+
+H = histc(NXY(:), 0:255); % gray-level histogram of the Norm of image
+figure; bar(H);
+
+P = H/(h*w);    % sorted pdf - from 0 to 255
+CP = cumsum(P); % sorted cdf - from 0 to 255
+
+% sum(P)        % check that \Sigma p_k = 1 !
+% [P, CP]       % display the pdf & the cdf ;D
+
+Test = CP > 0.95;    % get 95% of the darkest pixels (~ less +/- 3 sigma)
+
+UINT8 = (0:255)';    % vector of gray-level 
+[P, CP, Test, UINT8]
+
+% find teh the threshold
+TH = min(UINT8(Test));
+
+NXY_TH = NXY > TH; % build the threshed image - 84
+figure; image(repmat(uint8(255*NXY_TH), [1 1 3])); axis image;
+% **************************
 
 % find the main horizontal //
 % ********** TODO **********
@@ -288,7 +318,7 @@ title('Iax','Color','w'); axis off; axis image;
 subplot(2,1,2); image(repmat(IAY,[1 1 3]));
 title('Iay','Color','w'); axis off; axis image;
 
-function disp_norm_angle(dbg, Nxy, Axy)
+function [NXY, AXY] = disp_norm_angle(dbg, Nxy, Axy)
 % display the norm and the angle of the oriented x,y gradients
 NXY = uint8( 255 * Nxy / max(Nxy(:)) );
 AXY = uint8( 255 * (Axy + pi) / (2*pi) );
