@@ -1,11 +1,6 @@
 # Plates
-Matlab Plate Recognition
+**Matlab Plate Recognition**
 
-This project aims to read any car plate with Matlab. Some functions come
-from Peter Kovesi's libray (https://www.peterkovesi.com/matlabfns/#spatial)
-but they are also provided here (just to forget to add them in your Matlab
-path).
+This project aims to read any car plate in **Matlab**. Some functions come from **Peter Kovesi**'s [libray](https://www.peterkovesi.com/matlabfns/#spatial). So don't forget to add the *PeterKovesi* directory into your Matlab path.
 
-The next step will shape the rectification (basically a homography) of the
-ROI from 4 Harris corners and some parallel lines detected by a Hough
-transfom.
+The next step will consist to rectify the region of interest (with a homography basically) from the 4 Harris corners and the main lines detected by a Hough transform.

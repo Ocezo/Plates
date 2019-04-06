@@ -1,4 +1,4 @@
-% Plate Recognition - 05/20/2017
+% Plate Recognition - 03/10/2019
 % Jean-Marc Berthommé
 %
 % - 11/27/2014:
@@ -8,8 +8,10 @@
 % - 12/04/2014:
 %   . Color labelling improved (1st pass removal + special k-means)
 %   . Harris corners added
-% - 05/20/2017
+% - 05/20/2017:
 %   . reworking on the display
+% - 03/10/2019:
+%   . Corners detection update (see git commit message)
 
 function plate_recognition
 dbg = 1;      % debug flag
