@@ -15,7 +15,7 @@
 
 function plate_recognition
 dbg = 1;      % debug flag
-i = 8;        % image index - 1-35
+i = 8;        % image index - 1-35 -> 8 & 12
 nam = 'car';  % image name
 dir = 'Img';  % image directory
 ext = 'jpg';  % image extension
@@ -147,7 +147,7 @@ axis image; axis off; title(tit_,'Color','w');
 %     f9 = figure(9); set(gcf,'Color',[0.2,0.2,0.2]);
 %     set(f9, 'Position', [188 322 1005 652]); 
 %     image(repmat(NXY_, [1 1 3]));
-%     axis image; axis off; title(tit_,'Color','w');
+%     axis image; axis off; title(tit_,'Color','w'); pause;
 % end
 
 % slight crop (2px removed on the edges see the previous 5x5 convolutions)
