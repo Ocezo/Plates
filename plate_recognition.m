@@ -15,7 +15,7 @@
 
 function plate_recognition
 dbg = 1;      % debug flag
-i = 8;        % image index - 1-35
+i = 8;        % image index - 1-35 -> 8 & 12
 nam = 'car';  % image name
 dir = 'Img';  % image directory
 ext = 'jpg';  % image extension
@@ -102,34 +102,90 @@ Axy = atan2(-Iy,-Ix);       % gradient angles on [-pi, pi] with convention:
                             % .--> x  
                             % |
                             % v y
-disp_norm_angle(dbg, Nxy, Axy);
 
+% This code aims to fast  detect the horizontal pararel lines of the plates
+% in order to ameliorate the 2D homography
+% *********   *********
+[NXY, ~] = disp_norm_angle(dbg, Nxy, Axy);
+
+set(7,'Position',[1200 354 904 608]);
+
+fprintf('[min(Nxy), max(Nxy)]= [%0.2f, %0.2f]\n',min(Nxy(:)),max(Nxy(:)));
+fprintf('[min(NXY), max(NXY)]= [%0.2f, %0.2f]\n',min(NXY(:)),max(NXY(:)));
+
+H = histc(NXY(:), 0:255); % gray-level histogram of the Norm of image
+f8 = figure(8); set(gcf,'Color',[0.2,0.2,0.2]);
+set(f8, 'Position', [1021 42 895 263]); bar(H);
+
+P = H/(h*w);    % sorted pdf - from 0 to 255
+CP = cumsum(P); % sorted cdf - from 0 to 255
+
+% sum(P)        % check that \Sigma p_k = 1 !
+% [P, CP]       % display the pdf & the cdf ;D
+
+Test = CP > 0.95;  % get 95% of the darkest pixels (~ +/- 3 sigma)
+UINT8 = (0:255)';  % 0-255 vector of all the gray levels on 8-bit
+% [P, CP, Test, UINT8]
+
+% find the corresponding threshold
+th_ = min(UINT8(Test));
+
+NXY_ = NXY > th_;
+tit_ = sprintf('th_ = %d - %0.2f%%', th_, 100*(1-CP(th_+1)));
+
+% display the threshed image
+f9 = figure(9); set(gcf,'Color',[0.2,0.2,0.2]);
+set(f9, 'Position', [6 359 1005 615]); 
+image(repmat(NXY_, [1 1 3]));
+axis image; axis off; title(tit_,'Color','w');
+
+% for th_ = 0:255
+%     tit_ = sprintf('th_ = %d - %0.2f%%',th_,100*(1-CP(th_+1)));
+%     NXY_ = NXY > th_;
+% 
+%     % display the threshed image
+%     f9 = figure(9); set(gcf,'Color',[0.2,0.2,0.2]);
+%     set(f9, 'Position', [188 322 1005 652]); 
+%     image(repmat(NXY_, [1 1 3]));
+%     axis image; axis off; title(tit_,'Color','w'); pause;
+% end
+
+% slight crop (2px removed on the edges see the previous 5x5 convolutions)
+NXY_2 = NXY_(3:end-2, 3:end-2);
+figure(9); image(repmat(NXY_2, [1 1 3]));
+axis image; axis off; title(tit_,'Color','w');
+
+% now start the Hough transform
+
+% **************************
+
+% **************************
 % find the main horizontal //
 % ********** TODO **********
-Dxy = Nxy > (mean(Nxy(:)) + std(Nxy(:)));
-figure; image(repmat(Dxy, [1 1 3])); axis image;
-
-Dxy = Nxy > (mean(Nxy(:)) + 2*std(Nxy(:)));
-figure; image(repmat(Dxy, [1 1 3])); axis image;
-
-Dxy = Nxy > (mean(Nxy(:)) + 3*std(Nxy(:)));
-figure; image(repmat(Dxy, [1 1 3])); axis image;
-
-A = Axy(Dxy); W = Iay(Dxy);
-% figure; hist(A, linspace(0,pi,1000));
-bins = 10000; amin = min(A); amax = max(A);
-[histw, histv] = histwv(A, W, amin, amax, bins);
-
-disp_hist(dbg, histw, histv);
-
-delta = (amax-amin)/(bins-1); [~,idmax] = max(histw);
-theta_max = (idmax-1)*delta + amin;
-fprintf('L''angle max est de %0.2f°.\n\n', theta_max * 180/pi);
+% Dxy_1 = Nxy > (mean(Nxy(:)) + std(Nxy(:)));
+% figure; image(repmat(Dxy_1, [1 1 3])); axis image;
+% 
+% Dxy_2 = Nxy > (mean(Nxy(:)) + 2*std(Nxy(:)));
+% figure; image(repmat(Dxy_2, [1 1 3])); axis image;
+% 
+% Dxy_3 = Nxy > (mean(Nxy(:)) + 3*std(Nxy(:)));
+% figure; image(repmat(Dxy_3, [1 1 3])); axis image;
+% 
+% A = Axy(Dxy_3); W = Iay(Dxy_3);
+% % figure; hist(A, linspace(0,pi,1000));
+% bins = 10000; amin = min(A); amax = max(A);
+% [histw, histv] = histwv(A, W, amin, amax, bins);
+% 
+% disp_hist(dbg, histw, histv);
+% 
+% delta = (amax-amin)/(bins-1); [~,idmax] = max(histw);
+% theta_max = (idmax-1)*delta + amin;
+% fprintf('L''angle max est de %0.2f°.\n\n', theta_max * 180/pi);
 % **************************
 
 % Canny edges
-Ie = edge(Ig,'canny');
-disp_can(dbg, Ie);
+% Ie = edge(Ig,'canny');
+% disp_can(dbg, Ie);
 
 % Igmap = rgb2gray(Imap);
 % Iemap = edge(Igmap,'canny');
@@ -288,7 +344,7 @@ title('Iax','Color','w'); axis off; axis image;
 subplot(2,1,2); image(repmat(IAY,[1 1 3]));
 title('Iay','Color','w'); axis off; axis image;
 
-function disp_norm_angle(dbg, Nxy, Axy)
+function [NXY, AXY] = disp_norm_angle(dbg, Nxy, Axy)
 % display the norm and the angle of the oriented x,y gradients
 NXY = uint8( 255 * Nxy / max(Nxy(:)) );
 AXY = uint8( 255 * (Axy + pi) / (2*pi) );
