@@ -150,13 +150,17 @@ axis image; axis off; title(tit_,'Color','w');
 %     axis image; axis off; title(tit_,'Color','w'); pause;
 % end
 
-% slight crop (2px removed on the edges see the previous 5x5 convolutions)
+% slight crop (2px removed on the edges due to the 5x5 convolutions)
 NXY_2 = NXY_(3:end-2, 3:end-2);
 figure(9); image(repmat(NXY_2, [1 1 3]));
 axis image; axis off; title(tit_,'Color','w');
 
 % now start the Hough transform
-
+dbg = 0;    % debug flag
+tres = 360;
+dres = 300;
+fig  =  9;
+[accu, t, d] = hough(NXY_2, tres, dres, dbg, fig);
 % **************************
 
 % **************************
