@@ -1,4 +1,4 @@
-% Hough function - 04/18/2019
+% Hough function - 04/20/2019
 % Jean-Marc Berthommé
 %
 % - 04/11/2019:
@@ -10,10 +10,13 @@
 %   . new protection against pixels outside the accumulation grid (~> Ok)
 %   . modularity added to call a function in the plate_recognition project
 %   . random subsampling of the detections to fasten the "accu" estimation
+% - 04/20/2019:
+%   . "accu" estimation is now ~x300 faster ("for" ~> matrix calculations)
 
-function [accu, t, d] = hough(I, tres, dres, dbg, fig)
+function [accu, t, d] = hough(I, tres, dres, max_nb, dbg, fig)
 % Hough transform of a binary image at resolution [dres, tres]
-max_nb = 500; % targeted (and randomly shrinked) number of detections
+
+% max_nb = 500; % targeted (and randomly shrinked) number of detections
 
 % Get the detections matching to the white pixels
 [h,w] = size(I);
@@ -27,7 +30,7 @@ if  nb > max_nb
     rnd_ = rand(nb,1);
     rnd = rnd_ < max_nb/nb;
     fprintf('%d white pixels are picked from %d ', sum(rnd), nb);
-    fprintf('to accelerate the estimation of the accumulation matrix.\n');
+    fprintf('to accelerate the estimation of\nthe accumulation matrix.\n');
     
     % white pixels number shrinkage
     % xx2 = xx(rnd); yy2 = yy(rnd);
@@ -73,20 +76,45 @@ nb = size(xx,1); % nb of white pixels i.e. detections
 Xd = (1:tres)';  % theta x coordinates
 
 % *** MAIN METHOD ***
-for i=1:nb % TODO: hugely fasten this slow "for"! :$ ;D
-   y=yy(i); x=xx(i);                %     ->  ->
-   d_ = -x*sin(theta)+y*cos(theta); % d_ = OM . e_\theta
-   
-   [~, dBin] = histc(d_, dedges);   % make fall the points into the bins
-   Yd = (dres+1)-dBin;              % theta y coordinates
-   Ok = dBin ~= 0;                  % remove the pixels outside the grid
-   Ind = Yd(Ok) + (Xd(Ok)-1)* dres; % indexes of the sinusoïde pixels
-   accu(Ind) = accu(Ind) + 1;       % increment the accumulation matrix
-   
-   % display the dual space & the renormalized accumulation image
-   disp_dual(t, d_, dbg, fig);
-   disp_accu(accu, t3, fig);
-end
+% tic;
+% for i=1:nb % TODO: hugely fasten this slow "for"! :$ ;D
+%    y=yy(i); x=xx(i);                %     ->  ->
+%    d_ = -x*sin(theta)+y*cos(theta); % d_ = OM . e_\theta
+%
+%    [~, dBin] = histc(d_, dedges);   % make fall the points into the bins
+%    Yd = (dres+1)-dBin;              % theta y coordinates
+%    Ok = dBin ~= 0;                  % remove the pixels outside the grid
+%    Ind = Yd(Ok) + (Xd(Ok)-1)* dres; % indexes of the sinusoïde pixels
+%    accu(Ind) = accu(Ind) + 1;       % increment the accumulation matrix
+%    
+%    % display the dual space & the renormalized accumulation image
+%    disp_dual(t, d_, dbg, fig);
+%    disp_accu(accu, t3, fig);
+% end
+% toc;
+
+tic;
+D = -xx*sin(theta')+yy*cos(theta');
+[~, Dbin] = histc(D, dedges);
+OOk = Dbin ~= 0;
+YYd = (dres+1)-Dbin;
+XXd = repmat(1:tres, [nb 1]);
+IND = YYd(OOk) + (XXd(OOk)-1)* dres;
+% IND = reshape(IND, nb, tres);
+ntot = dres*tres;
+% N = histc(IND(:), (1:ntot) );
+N = histc(IND, (1:ntot) );
+accu2 = reshape(N, [dres, tres]);
+Iacc2 = uint8(255*(accu2/max(accu2(:))));
+toc;
+
+% Check we have the same output
+% accu_diff = accu - accu2;
+% sum(accu_diff(:)) % = 0 ! ;D
+
+f4 = figure(fig+3); set(gcf,'Color',[0.2,0.2,0.2]);
+set(f4,'Position', [1311 11 605 434]);
+image(repmat(Iacc2, [1 1 3])); axis image; title(t3,'color','w');
 
 function disp_first_dual(tmin, tmax, tres, dmin, dmax, dres, fig)
 % first display of the dual space

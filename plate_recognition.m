@@ -156,11 +156,12 @@ figure(9); image(repmat(NXY_2, [1 1 3]));
 axis image; axis off; title(tit_,'Color','w');
 
 % now start the Hough transform
-dbg = 0;    % debug flag
-tres = 360;
-dres = 300;
+dbg = 0;       % debug flag
+tres = 180;    % theta resolution ~180°
+dres = 210;    % distance (to origin) resolution 
+max_nb = 50000; % maximum number of detections 50-500
 fig  =  9;
-[accu, t, d] = hough(NXY_2, tres, dres, dbg, fig);
+[accu, t, d] = hough(NXY_2, tres, dres, max_nb, dbg, fig);
 % **************************
 
 % **************************
