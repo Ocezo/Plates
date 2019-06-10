@@ -15,8 +15,12 @@
 
 function [accu, t, d] = hough(I, tres, dres, max_nb, dbg, fig)
 % Hough transform of a binary image at resolution [dres, tres]
-
-% max_nb = 500; % targeted (and randomly shrinked) number of detections
+% I      : binary input image
+% tres   : theta    resolution - px (parameter dual space)
+% dres   : distance resolution - px (parameter dual space)
+% max_nb : targeted number of detections (~> random shrinkage)
+% dbg    : debug flag
+% fig    : current figure number
 
 % Get the detections matching to the white pixels
 [h,w] = size(I);
@@ -24,7 +28,7 @@ function [accu, t, d] = hough(I, tres, dres, max_nb, dbg, fig)
 xx = X(I); yy = Y(I);
 
 % Violent random subsampling to accelerate the "accu" estimation
-nb = size(xx,1); % nb of detections (white pixels)
+nb = size(xx,1); % nb of white pixels i.e. nb of detections
 
 if  nb > max_nb
     rnd_ = rand(nb,1);
@@ -41,6 +45,7 @@ end
 % I2 = zeros(h,w);
 % for i=1:size(xx,1), I2(yy(i),xx(i))=1; end;
 % figure; image(repmat(I2, [1 1 3])); axis image;
+nb = size(xx,1); % new real nb of detections considered
 
 % Build the parameter space [theta, d]
 dt = -10;       % theta    delta - [°] - 10°
@@ -51,8 +56,8 @@ tmax = tM + dt; % real theta max - [°]
 % tres = 19;    % /!\ theta resolution -  [°] - 19/180
 % tstep = ( tmax-tmin ) / (tres - 1);
 
-t = linspace(tmin, tmax, tres)'; % angle vector -  [°]
-theta = t/180*pi;                % theta vector - [rad]
+t = linspace(tmin, tmax, tres)'; % angle theta vector -  [°]
+theta = t/180*pi;                % angle theta vector - [rad]
 
 dd = 0;             % dist delta    - [px]
 dM = (h^2+w^2)^0.5; % dist max      - [px]
@@ -65,22 +70,20 @@ d = linspace(dmax, dmin, dres)'; % dist vector - [px]
 dedges = linspace(dmin-dstep/2, dmax+dstep/2, dres+1);
 
 % Accumulation matrix
-disp_first_dual(tmin, tmax, tres, dmin, dmax, dres, fig);
-
 accu = zeros(dres, tres);
+
+% First displays
+% disp_first_dual(tmin, tmax, tres, dmin, dmax, dres, fig);
 t3 = sprintf('Dual space [theta, d]: %dx%d', dres, tres);
+% disp_first_accu(accu, t3, fig);
 
-disp_first_accu(accu, t3, fig);
-
-nb = size(xx,1); % nb of white pixels i.e. detections
-Xd = (1:tres)';  % theta x coordinates
-
+% Xd = (1:tres)';  % theta x coordinates
 % *** MAIN METHOD ***
 % tic;
 % for i=1:nb % TODO: hugely fasten this slow "for"! :$ ;D
 %    y=yy(i); x=xx(i);                %     ->  ->
 %    d_ = -x*sin(theta)+y*cos(theta); % d_ = OM . e_\theta
-%
+% 
 %    [~, dBin] = histc(d_, dedges);   % make fall the points into the bins
 %    Yd = (dres+1)-dBin;              % theta y coordinates
 %    Ok = dBin ~= 0;                  % remove the pixels outside the grid
@@ -88,12 +91,13 @@ Xd = (1:tres)';  % theta x coordinates
 %    accu(Ind) = accu(Ind) + 1;       % increment the accumulation matrix
 %    
 %    % display the dual space & the renormalized accumulation image
-%    disp_dual(t, d_, dbg, fig);
-%    disp_accu(accu, t3, fig);
+%    % disp_dual(t, d_, dbg, fig);
+%    % disp_accu(accu, t3, fig);
 % end
 % toc;
 
 tic;
+T = repmat(t', [nb, 1]);
 D = -xx*sin(theta')+yy*cos(theta');
 [~, Dbin] = histc(D, dedges);
 OOk = Dbin ~= 0;
@@ -105,25 +109,24 @@ ntot = dres*tres;
 % N = histc(IND(:), (1:ntot) );
 N = histc(IND, (1:ntot) );
 accu2 = reshape(N, [dres, tres]);
-Iacc2 = uint8(255*(accu2/max(accu2(:))));
 toc;
 
 % Check we have the same output
 % accu_diff = accu - accu2;
 % sum(accu_diff(:)) % = 0 ! ;D
 
-f4 = figure(fig+3); set(gcf,'Color',[0.2,0.2,0.2]);
-set(f4,'Position', [1311 11 605 434]);
-image(repmat(Iacc2, [1 1 3])); axis image; title(t3,'color','w');
+% Final displays
+disp_final_accu(accu2, t3, fig);
+% disp_final_dual(tmin,tmax,tres, dmin,dmax,dres, fig, T, D, dbg);
 
-function disp_first_dual(tmin, tmax, tres, dmin, dmax, dres, fig)
-% first display of the dual space
-tstep = ( tmax-tmin ) / (tres - 1);
-dstep = ( dmax-dmin ) / (dres - 1);
-
-f2 = figure(fig+1); set(f2,'Position', [6 9 1295 965]);
-axis([tmin-tstep/2,tmax+tstep/2, dmin-dstep/2,dmax+dstep/2]); axis square;
-disp_grid(tmin,tmax,tres,  dmin,dmax,dres, ':k');
+% function disp_first_dual(tmin, tmax, tres, dmin, dmax, dres, fig)
+% % first display of the dual space
+% tstep = ( tmax-tmin ) / (tres - 1);
+% dstep = ( dmax-dmin ) / (dres - 1);
+% 
+% f2 = figure(fig+1); set(f2,'Position', [6 9 1295 965]);
+% axis([tmin-tstep/2,tmax+tstep/2, dmin-dstep/2,dmax+dstep/2]); axis square;
+% disp_grid(tmin,tmax,tres,  dmin,dmax,dres, ':k');
 
 function disp_grid(xm,xM,nx, ym,yM,ny, color)
 % display a grid
@@ -147,21 +150,43 @@ for i = 1:ny+1 % horizontal lines
 end
 hold off;
 
-function disp_first_accu(accu, t3, fig)
-% first display of the accumulation matrix
-Iacc = uint8(255*accu);
+% function disp_dual(t, d_, dbg, fig)
+% % display of the dual space
+% figure(fig+1); hold on; plot(t, d_); hold off;
+% if (dbg==1), hold on; plot(t, d_, 'm+'); hold off; end;
+
+function disp_final_dual(tmin,tmax,tres, dmin,dmax,dres, fig, T, D, dbg)
+% final display of the dual space
+tstep = ( tmax-tmin ) / (tres - 1);
+dstep = ( dmax-dmin ) / (dres - 1);
+
+f2 = figure(fig+1); set(f2,'Position', [6 9 1295 965]);
+axis([tmin-tstep/2,tmax+tstep/2, dmin-dstep/2,dmax+dstep/2]); axis square;
+disp_grid(tmin,tmax,tres,  dmin,dmax,dres, ':k');
+
+hold on; plot(T', D', 'b'); hold off;
+if (dbg==1), hold on; plot(T', D', 'm+'); hold off; end;
+
+% function disp_first_accu(accu, t3, fig)
+% % first display of the accumulation matrix
+% Iacc = uint8(255*accu);
+% 
+% f3 = figure(fig+2); set(gcf,'Color',[0.2,0.2,0.2]);
+% set(f3,'Position', [1311 11 605 434]);
+% image(repmat(Iacc, [1 1 3])); axis image; title(t3,'color','w');
+
+% function disp_accu(accu, t3, fig)
+% % display the accumulation matrix
+% Iacc = uint8(255*(accu/max(accu(:))));
+% 
+% figure(fig+2); image(repmat(Iacc, [1 1 3])); axis image;
+% title(t3, 'color','w');
+
+function disp_final_accu(accu, t3, fig)
+% display the final accumulation matrix
+Iacc = uint8(255*(accu/max(accu(:))));
 
 f3 = figure(fig+2); set(gcf,'Color',[0.2,0.2,0.2]);
 set(f3,'Position', [1311 11 605 434]);
 image(repmat(Iacc, [1 1 3])); axis image; title(t3,'color','w');
 
-function disp_dual(t, d_, dbg, fig)
-% display of the dual space
-figure(fig+1); hold on; plot(t, d_); hold off;
-if (dbg==1), hold on; plot(t, d_, 'm+'); hold off; end;
-
-function disp_accu(accu, t3, fig)
-% display the accumulation matrix
-Iacc = uint8(255*(accu/max(accu(:))));
-figure(fig+2); image(repmat(Iacc, [1 1 3])); axis image;
-title(t3, 'color','w');

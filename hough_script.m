@@ -11,7 +11,7 @@ function hough_script
 dbg = 1;   % debug flag
 tres = 19; % theta resolution: [19,180] for ~180°
 dres = 21; % delta resolution: [21,150]
-
+ 
 % Build & display a binary image
 h = 6; w = 8; % 6x8 - 16x32
 % h = input('image height ? '); w = input('image width  ? ');
@@ -22,7 +22,8 @@ I = Irnd < 0.5;   % binary matrix/image
 fig = disp_binary_img(I);
 
 % *** CALL THE MAIN METHOD ***
-[accu, t, d] = hough(I, tres, dres, dbg, fig);
+max_nb = sum(I(:)); % 100;
+[accu, t, d] = hough(I, tres, dres, max_nb, dbg, fig);
 
 % Find the best line
 [accu_max, id_max] = max(accu(:));
