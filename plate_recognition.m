@@ -14,11 +14,11 @@
 %   . Corners detection update (see git commit message)
 
 function plate_recognition
-dbg = 1;      % debug flag
-i = 8;        % image index - 1-35 -> 8 & 12
-nam = 'car';  % image name
-dir = 'Img';  % image directory
-ext = 'jpg';  % image extension
+dbg = 1;     % debug flag
+i = 8;       % image index - 1-35 -> 8 & 12
+nam = 'car'; % image name
+dir = 'Img'; % image directory
+ext = 'jpg'; % image extension
 
 % read and display the source image
 file = sprintf('%s%d.%s',nam,i,ext);
