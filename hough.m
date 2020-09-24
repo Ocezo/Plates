@@ -97,7 +97,7 @@ t3 = sprintf('Dual space [theta, d]: %dx%d', dres, tres);
 % toc;
 
 tic;
-T = repmat(t', [nb, 1]);
+% T = repmat(t', [nb, 1]);
 D = -xx*sin(theta')+yy*cos(theta');
 [~, Dbin] = histc(D, dedges);
 OOk = Dbin ~= 0;
